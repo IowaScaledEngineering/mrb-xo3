@@ -196,12 +196,17 @@ static inline void vitalLogic(CPState_t *cpState)
 		CPRouteClear(cpState, ROUTE_MAIN1_TO_MAIN2_WESTBOUND);
 		CPRouteClear(cpState, ROUTE_MAIN2_TO_MAIN1_EASTBOUND);
 		CPRouteClear(cpState, ROUTE_MAIN2_TO_MAIN1_WESTBOUND);
+
+		CPRouteClear(cpState, ROUTE_MAIN3_TO_MAIN2_EASTBOUND);
+		CPRouteClear(cpState, ROUTE_MAIN2_TO_MAIN3_WESTBOUND);
 	}
 	
 	if (occupancyMain1)
 	{
 		CPRouteClear(cpState, ROUTE_MAIN1_EASTBOUND);
 		CPRouteClear(cpState, ROUTE_MAIN1_WESTBOUND);
+		CPRouteClear(cpState, ROUTE_MAIN1_TO_MAIN3_WESTBOUND);
+		CPRouteClear(cpState, ROUTE_MAIN3_TO_MAIN1_EASTBOUND);
 	}
 	
 	if (occupancyMain2)
@@ -272,10 +277,19 @@ static inline void vitalLogic(CPState_t *cpState)
 			// If we're actually unlocked, put up restricting indications where appropriate
 			if (eastCrossover && westCrossover) // Both normal
 			{
-				CPSignalHeadSetAspect(cpState, SIG_MAIN1_W_UPPER, ASPECT_FL_RED);
-				CPSignalHeadSetAspect(cpState, SIG_MAIN1_E_UPPER, ASPECT_FL_RED);
 				CPSignalHeadSetAspect(cpState, SIG_MAIN2_W_UPPER, ASPECT_FL_RED);
 				CPSignalHeadSetAspect(cpState, SIG_MAIN2_E_UPPER, ASPECT_FL_RED);
+
+				if (m1m3Switch)
+				{
+					// M1-M3 is normal  (against M3)
+					CPSignalHeadSetAspect(cpState, SIG_MAIN1_W_UPPER, ASPECT_FL_RED);
+					CPSignalHeadSetAspect(cpState, SIG_MAIN1_E_UPPER, ASPECT_FL_RED);
+				} else {
+					// M1-M3 is reversed (to M3)
+					CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_UPPER, ASPECT_FL_RED);
+					CPSignalHeadSetAspect(cpState, SIG_MAIN1_E_LOWER, ASPECT_FL_RED);
+				}
 			}
 			else if (eastCrossover && !westCrossover)
 			{
@@ -284,13 +298,18 @@ static inline void vitalLogic(CPState_t *cpState)
 			}
 			else if (!eastCrossover && westCrossover)
 			{
-				CPSignalHeadSetAspect(cpState, SIG_MAIN1_W_LOWER, ASPECT_FL_RED);
 				CPSignalHeadSetAspect(cpState, SIG_MAIN2_E_LOWER, ASPECT_FL_RED);
+				if (m1m3Switch)
+				{
+					// M1-M3 is normal  (against M3)
+					CPSignalHeadSetAspect(cpState, SIG_MAIN1_W_LOWER, ASPECT_FL_RED);
+				} else {
+					CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_LOWER, ASPECT_FL_RED);
+				}
 			} else {
 				CPSignalHeadSetAspect(cpState, SIG_MAIN2_W_LOWER, ASPECT_FL_RED);
 				CPSignalHeadSetAspect(cpState, SIG_MAIN2_E_LOWER, ASPECT_FL_RED);
 			}
-
 		}
 	}
 	else
@@ -332,6 +351,43 @@ static inline void vitalLogic(CPState_t *cpState)
 				CPSignalHeadSetAspect(cpState, SIG_MAIN1_E_UPPER, ASPECT_GREEN);
 			}
 		}
+		else if (CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN3_WESTBOUND))
+		{
+			CPSignalHeadSetAspect(cpState, SIG_MAIN1_E_UPPER, ASPECT_RED);
+			if (CPInputStateGet(cpState, VOCC_M3W_ADJOIN))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN1_E_LOWER, ASPECT_RED);
+			}
+			else if (CPInputStateGet(cpState, VOCC_M3W_APPROACH))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN1_E_LOWER, ASPECT_YELLOW);
+			}
+			else if (CPInputStateGet(cpState, VOCC_M3W_APPROACH2))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN1_E_LOWER, ASPECT_FL_YELLOW);
+			} else {
+				CPSignalHeadSetAspect(cpState, SIG_MAIN1_E_LOWER, ASPECT_GREEN);
+			}
+		}
+		else if (CPRouteTest(cpState, ROUTE_MAIN3_TO_MAIN1_EASTBOUND))
+		{
+			CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_LOWER, ASPECT_RED);
+			if (CPInputStateGet(cpState, VOCC_M1E_ADJOIN))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_UPPER, ASPECT_RED);
+			}
+			else if (CPInputStateGet(cpState, VOCC_M1E_APPROACH))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_UPPER, ASPECT_YELLOW);
+			}
+			else if (CPInputStateGet(cpState, VOCC_M1E_APPROACH2))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_UPPER, ASPECT_FL_YELLOW);
+			} else {
+				CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_UPPER, ASPECT_GREEN);
+			}
+		}
+
 
 		if (CPRouteTest(cpState, ROUTE_MAIN2_EASTBOUND))
 		{
@@ -459,6 +515,42 @@ static inline void vitalLogic(CPState_t *cpState)
 				CPSignalHeadSetAspect(cpState, SIG_MAIN2_W_LOWER, ASPECT_FL_YELLOW);
 			} else {
 				CPSignalHeadSetAspect(cpState, SIG_MAIN2_W_LOWER, ASPECT_GREEN);
+			}
+		}
+		else if (CPRouteTest(cpState, ROUTE_MAIN2_TO_MAIN3_WESTBOUND))
+		{
+			CPSignalHeadSetAspect(cpState, SIG_MAIN2_E_UPPER, ASPECT_RED);
+			if (CPInputStateGet(cpState, VOCC_M3W_ADJOIN))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN2_E_LOWER, ASPECT_RED);
+			}
+			else if (CPInputStateGet(cpState, VOCC_M3W_APPROACH))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN2_E_LOWER, ASPECT_YELLOW);
+			}
+			else if (CPInputStateGet(cpState, VOCC_M3W_APPROACH2))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN2_E_LOWER, ASPECT_FL_YELLOW);
+			} else {
+				CPSignalHeadSetAspect(cpState, SIG_MAIN2_E_LOWER, ASPECT_GREEN);
+			}
+		}
+		else if (CPRouteTest(cpState, ROUTE_MAIN3_TO_MAIN2_EASTBOUND))
+		{
+			CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_UPPER, ASPECT_RED);
+			if (CPInputStateGet(cpState, VOCC_M2E_ADJOIN))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_LOWER, ASPECT_RED);
+			}
+			else if (CPInputStateGet(cpState, VOCC_M2E_APPROACH))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_LOWER, ASPECT_YELLOW);
+			}
+			else if (CPInputStateGet(cpState, VOCC_M2E_APPROACH2))
+			{
+				CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_LOWER, ASPECT_FL_YELLOW);
+			} else {
+				CPSignalHeadSetAspect(cpState, SIG_MAIN3_W_LOWER, ASPECT_GREEN);
 			}
 		}
 		else if (CPRouteTest(cpState, ROUTE_MAIN2_TO_MAIN1_WESTBOUND))
@@ -666,8 +758,34 @@ bool cpCodeRoute(CPState_t* cpState, CPRouteEntrance_t entrance, bool setRoute)
 
 	switch(entrance)
 	{
+		case ROUTE_ENTR_M3_EASTBOUND:
+			if (!westCrossover || m1m3Switch) // Turnout set against us
+				return false;
+				
+			if (eastCrossover)
+			{
+				// Both crossovers normal, straight through route
+				// Is there already a conflicting route set?
+				if (CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN3_WESTBOUND))
+					return false;
+
+				// Lock turnouts
+				cpLockAllTurnouts(cpState);
+				// Set route
+				CPRouteSet(cpState, ROUTE_MAIN3_TO_MAIN1_EASTBOUND);
+			} else {
+				// West crossover reversed, M1->M2
+				if (CPRouteTest(cpState, ROUTE_MAIN2_TO_MAIN3_WESTBOUND)) 
+					return false;
+
+				// Lock turnouts
+				cpLockAllTurnouts(cpState);
+				CPRouteSet(cpState, ROUTE_MAIN3_TO_MAIN2_EASTBOUND);
+			}
+			break;
+		
 		case ROUTE_ENTR_M1_EASTBOUND:
-			if (!westCrossover) // Turnout set against us
+			if (!westCrossover || !m1m3Switch) // Turnout set against us
 				return false;
 
 			if (eastCrossover)
@@ -686,6 +804,8 @@ bool cpCodeRoute(CPState_t* cpState, CPRouteEntrance_t entrance, bool setRoute)
 				if (CPRouteTest(cpState, ROUTE_MAIN2_TO_MAIN1_WESTBOUND))
 					return false;
 
+				// Lock turnouts
+				cpLockAllTurnouts(cpState);
 				CPRouteSet(cpState, ROUTE_MAIN1_TO_MAIN2_EASTBOUND);
 			}
 			break;
@@ -698,14 +818,27 @@ bool cpCodeRoute(CPState_t* cpState, CPRouteEntrance_t entrance, bool setRoute)
 			if (westCrossover)
 			{
 				// Both crossovers normal, straight through route
-				// Is there already a conflicting route set?
-				if (CPRouteTest(cpState, ROUTE_MAIN1_EASTBOUND))
-					return false;
 
-				// Lock turnouts
-				cpLockAllTurnouts(cpState);
-				// Set route
-				CPRouteSet(cpState, ROUTE_MAIN1_WESTBOUND);
+				if (m1m3Switch)
+				{
+					// Is there already a conflicting route set?
+					if (CPRouteTest(cpState, ROUTE_MAIN1_EASTBOUND))
+						return false;
+
+					// Lock turnouts
+					cpLockAllTurnouts(cpState);
+					// Set route
+					CPRouteSet(cpState, ROUTE_MAIN1_WESTBOUND);
+				} else {
+					// M1 to M3 switch is reversed
+					// Is there already a conflicting route set?
+					if (CPRouteTest(cpState, ROUTE_MAIN3_TO_MAIN1_EASTBOUND))
+						return false;
+					// Lock turnouts
+					cpLockAllTurnouts(cpState);
+					// Set route
+					CPRouteSet(cpState, ROUTE_MAIN1_TO_MAIN3_WESTBOUND);
+				}
 			} else {
 				// West crossover reversed, M1->M2
 				if (CPRouteTest(cpState, ROUTE_MAIN2_TO_MAIN1_EASTBOUND))
@@ -770,12 +903,22 @@ bool cpCodeRoute(CPState_t* cpState, CPRouteEntrance_t entrance, bool setRoute)
 				CPRouteSet(cpState, ROUTE_MAIN2_WESTBOUND);
 				return true;
 			} else if (!westCrossover && eastCrossover) {
-				// West crossover reversed, M2->M1
-				if (CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN2_EASTBOUND))
-					return false;
 
-				cpLockAllTurnouts(cpState);
-				CPRouteSet(cpState, ROUTE_MAIN2_TO_MAIN1_WESTBOUND);
+				if (m1m3Switch)
+				{
+					// West crossover reversed, M2->M1
+					if (CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN2_EASTBOUND))
+						return false;
+
+					cpLockAllTurnouts(cpState);
+					CPRouteSet(cpState, ROUTE_MAIN2_TO_MAIN1_WESTBOUND);
+				} else {
+					if (CPRouteTest(cpState, ROUTE_MAIN3_TO_MAIN2_EASTBOUND))
+						return false;
+
+					cpLockAllTurnouts(cpState);
+					CPRouteSet(cpState, ROUTE_MAIN2_TO_MAIN3_WESTBOUND);
+				}
 				return true;
 			} else {
 				return false;

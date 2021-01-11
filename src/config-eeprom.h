@@ -41,12 +41,16 @@ LICENSE:
 #define EE_M2W_APRCH_ADDR       0x19
 #define EE_M2W_APRCH2_ADDR      0x1A
 #define EE_M2W_ADJ_ADDR         0x1B
-#define EE_M1E_TUMBLE_ADDR      0x1C
-#define EE_M2E_TUMBLE_ADDR      0x1D
-#define EE_M1W_TUMBLE_ADDR      0x1E
-#define EE_M2W_TUMBLE_ADDR      0x1F
-#define EE_M1_OS_ADDR           0x20
-#define EE_M2_OS_ADDR           0x21
+#define EE_M3W_APRCH_ADDR       0x1C
+#define EE_M3W_APRCH2_ADDR      0x1D
+#define EE_M3W_ADJ_ADDR         0x1E
+#define EE_M1E_TUMBLE_ADDR      0x1F
+#define EE_M2E_TUMBLE_ADDR      0x20
+#define EE_M1W_TUMBLE_ADDR      0x21
+#define EE_M2W_TUMBLE_ADDR      0x22
+#define EE_M3W_TUMBLE_ADDR      0x23
+#define EE_M1_OS_ADDR           0x24
+#define EE_M2_OS_ADDR           0x25
 
 #define EE_M1E_APRCH_PKT        0x30
 #define EE_M1E_APRCH2_PKT       0x31
@@ -60,12 +64,16 @@ LICENSE:
 #define EE_M2W_APRCH_PKT        0x39
 #define EE_M2W_APRCH2_PKT       0x3A
 #define EE_M2W_ADJ_PKT          0x3B
-#define EE_M1E_TUMBLE_PKT       0x3C
-#define EE_M2E_TUMBLE_PKT       0x3D
-#define EE_M1W_TUMBLE_PKT       0x3E
-#define EE_M2W_TUMBLE_PKT       0x3F
-#define EE_M1_OS_PKT            0x40
-#define EE_M2_OS_PKT            0x41
+#define EE_M3W_APRCH_PKT        0x3C
+#define EE_M3W_APRCH2_PKT       0x3D
+#define EE_M3W_ADJ_PKT          0x3E
+#define EE_M1E_TUMBLE_PKT       0x3F
+#define EE_M2E_TUMBLE_PKT       0x40
+#define EE_M1W_TUMBLE_PKT       0x41
+#define EE_M2W_TUMBLE_PKT       0x42
+#define EE_M3W_TUMBLE_PKT       0x43
+#define EE_M1_OS_PKT            0x44
+#define EE_M2_OS_PKT            0x45
 
 #define EE_M1E_APRCH_BITBYTE    0x50
 #define EE_M1E_APRCH2_BITBYTE   0x51
@@ -79,11 +87,15 @@ LICENSE:
 #define EE_M2W_APRCH_BITBYTE    0x59
 #define EE_M2W_APRCH2_BITBYTE   0x5A
 #define EE_M2W_ADJ_BITBYTE      0x5B
-#define EE_M1E_TUMBLE_BITBYTE   0x5C
-#define EE_M2E_TUMBLE_BITBYTE   0x5D
-#define EE_M1W_TUMBLE_BITBYTE   0x5E
-#define EE_M2W_TUMBLE_BITBYTE   0x5F
-#define EE_M1_OS_BITBYTE        0x60
-#define EE_M2_OS_BITBYTE        0x61
+#define EE_M3W_APRCH_BITBYTE    0x5C
+#define EE_M3W_APRCH2_BITBYTE   0x5D
+#define EE_M3W_ADJ_BITBYTE      0x5E
+#define EE_M1E_TUMBLE_BITBYTE   0x5F
+#define EE_M2E_TUMBLE_BITBYTE   0x60
+#define EE_M1W_TUMBLE_BITBYTE   0x61
+#define EE_M2W_TUMBLE_BITBYTE   0x62
+#define EE_M3W_TUMBLE_BITBYTE   0x63
+#define EE_M1_OS_BITBYTE        0x64
+#define EE_M2_OS_BITBYTE        0x65
 
 #endif
