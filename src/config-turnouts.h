@@ -27,6 +27,7 @@ typedef enum
 {
 	TURNOUT_E_XOVER,
 	TURNOUT_W_XOVER,
+	TURNOUT_M1_M3,
 	TURNOUT_END  // Must be last entry
 } CPTurnoutNames_t;
 

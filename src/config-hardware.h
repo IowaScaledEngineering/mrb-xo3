@@ -37,7 +37,7 @@ typedef struct
 const TurnoutPinDefinition const cpTurnoutPinDefs[TURNOUT_END] = 
 {
 	{TURNOUT_E_XOVER, 1, XIO_PORT_A, 0, false},
-	{TURNOUT_W_XOVER, 1, XIO_PORT_A, 1, false}
+	{TURNOUT_W_XOVER, 1, XIO_PORT_A, 1, false},
 	{TURNOUT_M1_M3,   1, XIO_PORT_A, 2, false}
 };
 
@@ -63,7 +63,7 @@ const SignalPinDefinition const cpSignalPinDefs[SIG_END] =
 	{SIG_MAIN1_W_UPPER, 0, XIO_PORT_B, 4, XIO_PORT_B, 5, XIO_PORT_B, 6, false},
 	{SIG_MAIN1_W_LOWER, 0, XIO_PORT_B, 7, XIO_PORT_C, 0, XIO_PORT_C, 1, false},
 	{SIG_MAIN2_W_UPPER, 0, XIO_PORT_C, 2, XIO_PORT_C, 3, XIO_PORT_C, 4, false},
-	{SIG_MAIN2_W_LOWER, 0, XIO_PORT_C, 5, XIO_PORT_C, 6, XIO_PORT_C, 7, false}
+	{SIG_MAIN2_W_LOWER, 0, XIO_PORT_C, 5, XIO_PORT_C, 6, XIO_PORT_C, 7, false},
 	{SIG_MAIN3_W_UPPER, 0, XIO_PORT_D, 0, XIO_PORT_D, 1, XIO_PORT_D, 2, false},
 	{SIG_MAIN3_W_LOWER, 0, XIO_PORT_D, 3, XIO_PORT_D, 4, XIO_PORT_D, 5, false}
 
