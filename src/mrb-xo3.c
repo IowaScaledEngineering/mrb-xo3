@@ -964,6 +964,7 @@ int main(void)
 		{
 			mrbusPktQueuePush(&mrbusTxQueue, mrbTxBuffer, statusLen);
 			decisecs = 0;
+			changed = false;
 		}
 
 		// If we have a packet to be transmitted, try to send it here
