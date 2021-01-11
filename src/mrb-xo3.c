@@ -253,11 +253,13 @@ static inline void vitalLogic(CPState_t *cpState)
 
 	bool eastCrossover = CPTurnoutActualDirectionGet(cpState, TURNOUT_E_XOVER);
 	bool westCrossover = CPTurnoutActualDirectionGet(cpState, TURNOUT_W_XOVER);
+	bool m1m3Switch = CPTurnoutActualDirectionGet(cpState, TURNOUT_M1_M3);
 
 	// Start out with a safe default - everybody red
 	CPSignalHeadAllSetAspect(cpState, ASPECT_RED);
 
 	if (CPTurnoutRequestedDirectionGet(cpState, TURNOUT_E_XOVER) != CPTurnoutActualDirectionGet(cpState, TURNOUT_E_XOVER)
+		|| CPTurnoutRequestedDirectionGet(cpState, TURNOUT_M1_M3) != CPTurnoutActualDirectionGet(cpState, TURNOUT_M1_M3)
 		|| CPTurnoutRequestedDirectionGet(cpState, TURNOUT_W_XOVER) != CPTurnoutActualDirectionGet(cpState, TURNOUT_W_XOVER))
 	{
 		// Turnouts are in motion - RED!
@@ -658,6 +660,7 @@ bool cpCodeRoute(CPState_t* cpState, CPRouteEntrance_t entrance, bool setRoute)
 
 	bool eastCrossover = CPTurnoutRequestedDirectionGet(cpState, TURNOUT_E_XOVER);
 	bool westCrossover = CPTurnoutRequestedDirectionGet(cpState, TURNOUT_W_XOVER);
+	bool m1m3Switch = CPTurnoutRequestedDirectionGet(cpState, TURNOUT_M1_M3);
 	
 	// Remember, with turnouts normal = true
 
@@ -791,8 +794,9 @@ bool cpCodeRoute(CPState_t* cpState, CPRouteEntrance_t entrance, bool setRoute)
 void cpHandleTurnouts(CPState_t* state, XIOControl* xio)
 {
 	// Copy over the actual states of each turnout
-	CPTurnoutActualDirectionSet(state, TURNOUT_E_XOVER, CPInputStateGet(state, E_XOVER_ACTUAL_POS));
-	CPTurnoutActualDirectionSet(state, TURNOUT_W_XOVER, CPInputStateGet(state, W_XOVER_ACTUAL_POS));
+	CPTurnoutActualDirectionSet(state, TURNOUT_E_XOVER, !CPInputStateGet(state, E_XOVER_ACTUAL_POS));
+	CPTurnoutActualDirectionSet(state, TURNOUT_W_XOVER, !CPInputStateGet(state, W_XOVER_ACTUAL_POS));
+	CPTurnoutActualDirectionSet(state, TURNOUT_M1_M3, !CPInputStateGet(state, M1_M3_ACTUAL_POS));
 
 	// First, deal with the timelock
 	bool manualUnlockSwitchOn = !CPInputStateGet(state, TIMELOCK_SW_POS);//getTimelockSwitchState(xio);
@@ -808,6 +812,7 @@ void cpHandleTurnouts(CPState_t* state, XIOControl* xio)
 				// FIXME: Drop Clearance
 			} else {
 				setTimelockLED(xio, false);
+				CPTurnoutManualOperationsSet(state, TURNOUT_M1_M3, false);
 				CPTurnoutManualOperationsSet(state, TURNOUT_E_XOVER, false);
 				CPTurnoutManualOperationsSet(state, TURNOUT_W_XOVER, false);
 			}
@@ -821,6 +826,7 @@ void cpHandleTurnouts(CPState_t* state, XIOControl* xio)
 			else
 			{
 				CPRouteAllClear(state);
+				CPTurnoutManualOperationsSet(state, TURNOUT_M1_M3, true);
 				CPTurnoutManualOperationsSet(state, TURNOUT_E_XOVER, true);
 				CPTurnoutManualOperationsSet(state, TURNOUT_W_XOVER, true);
 				setTimelockLED(xio, events & EVENT_BLINKY);
@@ -829,6 +835,7 @@ void cpHandleTurnouts(CPState_t* state, XIOControl* xio)
 					
 		case STATE_UNLOCKED:
 			setTimelockLED(xio, true);
+			CPTurnoutLockSet(state, TURNOUT_M1_M3, false);
 			CPTurnoutLockSet(state, TURNOUT_E_XOVER, false);
 			CPTurnoutLockSet(state, TURNOUT_W_XOVER, false);
 			// Set requested directions here based on manual inputs
@@ -837,6 +844,7 @@ void cpHandleTurnouts(CPState_t* state, XIOControl* xio)
 			else
 			{
 				CPRouteAllClear(state);
+				CPTurnoutManualOperationsSet(state, TURNOUT_M1_M3, true);
 				CPTurnoutManualOperationsSet(state, TURNOUT_E_XOVER, true);
 				CPTurnoutManualOperationsSet(state, TURNOUT_W_XOVER, true);
 
@@ -845,6 +853,11 @@ void cpHandleTurnouts(CPState_t* state, XIOControl* xio)
 				
 				reqPos = CPInputStateGet(state, W_XOVER_MANUAL_POS);
 				CPTurnoutRequestedDirectionSet(state, TURNOUT_W_XOVER, reqPos);
+
+				reqPos = CPInputStateGet(state, M1_M3_MANUAL_POS);
+				CPTurnoutRequestedDirectionSet(state, TURNOUT_M1_M3, reqPos);
+
+
 			}
 
 			break;
@@ -945,7 +958,9 @@ int main(void)
 		{
 			CPSignalsToOutputs(&cpState, xio, events & EVENT_BLINKY);
 			CPTurnoutsToOutputs(&cpState, xio);
-			xioOutputWrite(xio);
+			xioOutputWrite(&xio[0]);
+			xioOutputWrite(&xio[1]);
+
 			events &= ~(EVENT_WRITE_OUTPUTS);
 		}
 		
