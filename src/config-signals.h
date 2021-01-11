@@ -35,6 +35,8 @@ typedef enum
 	SIG_MAIN1_W_LOWER, 
 	SIG_MAIN2_W_UPPER,
 	SIG_MAIN2_W_LOWER,
+	SIG_MAIN3_W_UPPER,
+	SIG_MAIN3_W_LOWER,
 	SIG_END  // Must be last entry
 } CPSignalHeadNames_t;
 

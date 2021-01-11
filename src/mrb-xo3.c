@@ -484,12 +484,9 @@ static inline void vitalLogic(CPState_t *cpState)
 
 }
 
-// For the XIO pins, 0 is output, 1 is input
-const uint8_t const xio1PinDirection[5] = { 0x00, 0x00, 0x00, 0xF2, 0x00 };
-
 void setTimelockLED(XIOControl* xio, bool state)
 {
-	xioSetDeferredIObyPortBit(xio, XIO_PORT_D, 0, state);
+	xioSetDeferredIObyPortBit(&xio[0], XIO_PORT_D, 6, state);
 }
 
 
@@ -870,7 +867,7 @@ void cpHandleTurnouts(CPState_t* state, XIOControl* xio)
 int main(void)
 {
 	CPState_t cpState;
-	XIOControl xio1;
+	XIOControl xio[2];
 	bool changed = false;
 	uint8_t update_decisecs = 20;
 	uint8_t lastStatusPacket[MRBUS_BUFFER_SIZE];
@@ -893,8 +890,14 @@ int main(void)
 	// Initialize I2C and XIOs for output - needs to have interrupts on for I2C to work
 	i2c_master_init();
 	xioHardwareReset();
-	xioInitialize(&xio1, I2C_XIO0_ADDRESS, xio1PinDirection);
 
+	// For the XIO pins, 0 is output, 1 is input
+	const uint8_t const xio0PinDirection[5] = { 0x00, 0x00, 0x00, 0x80, 0x00 };
+	const uint8_t const xio1PinDirection[5] = { 0xF8, 0x01, 0x00, 0x00, 0x00 };
+
+
+	xioInitialize(&xio[0], I2C_XIO0_ADDRESS, xio0PinDirection);
+	xioInitialize(&xio[1], I2C_XIO1_ADDRESS, xio1PinDirection);
 	while (1)
 	{
 		wdt_reset();
@@ -911,8 +914,10 @@ int main(void)
 		{
 			i2cResetCounter++;
 			xioHardwareReset();
-			xioInitialize(&xio1, I2C_XIO0_ADDRESS, xio1PinDirection);
-			if (xioIsInitialized(&xio1))
+			xioInitialize(&xio[0], I2C_XIO0_ADDRESS, xio0PinDirection);
+			xioInitialize(&xio[1], I2C_XIO1_ADDRESS, xio1PinDirection);
+
+			if (xioIsInitialized(&xio[0]) && xioIsInitialized(&xio[1]))
 				events &= ~(EVENT_I2C_ERROR); // If we initialized successfully, clear error
 		}
 
@@ -926,20 +931,21 @@ int main(void)
 		{
 			// Read local  and hardware inputs
 			events &= ~(EVENT_READ_INPUTS);
-			xioInputRead(&xio1);
-			CPXIOInputFilter(&cpState, &xio1);
+			xioInputRead(&xio[0]);
+			xioInputRead(&xio[1]);
+			CPXIOInputFilter(&cpState, xio);
 		}
 
 		// Vital Logic
-		cpHandleTurnouts(&cpState, &xio1);
+		cpHandleTurnouts(&cpState, xio);
 		vitalLogic(&cpState);
 
 		// Send output
 		if (events & EVENT_WRITE_OUTPUTS)
 		{
-			CPSignalsToOutputs(&cpState, &xio1, events & EVENT_BLINKY);
-			CPTurnoutsToOutputs(&cpState, &xio1);
-			xioOutputWrite(&xio1);
+			CPSignalsToOutputs(&cpState, xio, events & EVENT_BLINKY);
+			CPTurnoutsToOutputs(&cpState, xio);
+			xioOutputWrite(xio);
 			events &= ~(EVENT_WRITE_OUTPUTS);
 		}
 		
