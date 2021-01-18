@@ -597,7 +597,7 @@ void setTimelockLED(XIOControl* xio, bool state)
 #define MRB_STATUS6_M1W_ENTR_CLEARED    0x08
 #define MRB_STATUS6_M2E_ENTR_CLEARED    0x10
 #define MRB_STATUS6_M2W_ENTR_CLEARED    0x20
-
+#define MRB_STATUS6_M3W_ENTR_CLEARED    0x40
 
 #define MRB_STATUS7_E_XOVER_NORMAL      0x01
 #define MRB_STATUS7_E_XOVER_REVERSE     0x02
@@ -608,23 +608,33 @@ void setTimelockLED(XIOControl* xio, bool state)
 #define MRB_STATUS7_W_XOVER_MANUAL      0x40
 #define MRB_STATUS7_W_XOVER_LOCK        0x80
 
-#define MRB_STATUS8_M1E_VIRT_ADJ        0x01
-#define MRB_STATUS8_M1E_VIRT_APPR       0x02
-#define MRB_STATUS8_M1E_VIRT_APPR2      0x04
-#define MRB_STATUS8_M1E_VIRT_TUMBLE     0x08
-#define MRB_STATUS8_M1W_VIRT_ADJ        0x10
-#define MRB_STATUS8_M1W_VIRT_APPR       0x20
-#define MRB_STATUS8_M1W_VIRT_APPR2      0x40
-#define MRB_STATUS8_M1W_VIRT_TUMBLE     0x80
+#define MRB_STATUS8_M1M3_NORMAL         0x01
+#define MRB_STATUS8_M1M3_REVERSE        0x02
+#define MRB_STATUS8_M1M3_MANUAL         0x04
+#define MRB_STATUS8_M1M3_LOCK           0x08
 
-#define MRB_STATUS9_M2E_VIRT_ADJ        0x01
-#define MRB_STATUS9_M2E_VIRT_APPR       0x02
-#define MRB_STATUS9_M2E_VIRT_APPR2      0x04
-#define MRB_STATUS9_M2E_VIRT_TUMBLE     0x08
-#define MRB_STATUS9_M2W_VIRT_ADJ        0x10
-#define MRB_STATUS9_M2W_VIRT_APPR       0x20
-#define MRB_STATUS9_M2W_VIRT_APPR2      0x40
-#define MRB_STATUS9_M2W_VIRT_TUMBLE     0x80
+#define MRB_STATUS9_M1E_VIRT_ADJ        0x01
+#define MRB_STATUS9_M1E_VIRT_APPR       0x02
+#define MRB_STATUS9_M1E_VIRT_APPR2      0x04
+#define MRB_STATUS9_M1E_VIRT_TUMBLE     0x08
+#define MRB_STATUS9_M1W_VIRT_ADJ        0x10
+#define MRB_STATUS9_M1W_VIRT_APPR       0x20
+#define MRB_STATUS9_M1W_VIRT_APPR2      0x40
+#define MRB_STATUS9_M1W_VIRT_TUMBLE     0x80
+
+#define MRB_STATUS10_M2E_VIRT_ADJ        0x01
+#define MRB_STATUS10_M2E_VIRT_APPR       0x02
+#define MRB_STATUS10_M2E_VIRT_APPR2      0x04
+#define MRB_STATUS10_M2E_VIRT_TUMBLE     0x08
+#define MRB_STATUS10_M2W_VIRT_ADJ        0x10
+#define MRB_STATUS10_M2W_VIRT_APPR       0x20
+#define MRB_STATUS10_M2W_VIRT_APPR2      0x40
+#define MRB_STATUS10_M2W_VIRT_TUMBLE     0x80
+
+#define MRB_STATUS11_M3W_VIRT_ADJ        0x10
+#define MRB_STATUS11_M3W_VIRT_APPR       0x20
+#define MRB_STATUS11_M3W_VIRT_APPR2      0x40
+#define MRB_STATUS11_M3W_VIRT_TUMBLE     0x80
 
 #define OCC_VIRT_ADJ        0x01
 #define OCC_VIRT_APPR       0x02
@@ -662,7 +672,6 @@ uint8_t cpStateToStatusPacket(CPState_t* cpState, uint8_t *mrbTxBuffer, uint8_t 
 	if (CPInputStateGet(cpState, VOCC_M2_OS))
 		mrbTxBuffer[6] |= MRB_STATUS6_MAIN2_OS_OCC;
 
-
 	if (CPRouteTest(cpState, ROUTE_MAIN1_WESTBOUND)
 		|| CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN2_WESTBOUND))
 		mrbTxBuffer[6] |= MRB_STATUS6_M1E_ENTR_CLEARED;
@@ -681,9 +690,12 @@ uint8_t cpStateToStatusPacket(CPState_t* cpState, uint8_t *mrbTxBuffer, uint8_t 
 		|| CPRouteTest(cpState, ROUTE_MAIN2_VIA_MAIN1_EASTBOUND))
 		mrbTxBuffer[6] |= MRB_STATUS6_M2W_ENTR_CLEARED;
 
-	// Byte 7 - turnout states
+	// Byte 7 - More turnout states
 	if (STATE_LOCKED != CPTimelockStateGet(cpState, MAIN_TIMELOCK))
+	{
 		mrbTxBuffer[7] |= MRB_STATUS7_E_XOVER_MANUAL | MRB_STATUS7_W_XOVER_MANUAL;
+		mrbTxBuffer[8] |= MRB_STATUS8_M1M3_MANUAL;
+	}
 
 	if (CPTurnoutActualDirectionGet(cpState, TURNOUT_E_XOVER))
 		mrbTxBuffer[7] |= MRB_STATUS7_E_XOVER_NORMAL;
@@ -701,30 +713,48 @@ uint8_t cpStateToStatusPacket(CPState_t* cpState, uint8_t *mrbTxBuffer, uint8_t 
 	if (CPTurnoutLockGet(cpState, TURNOUT_W_XOVER))
 		mrbTxBuffer[7] |= MRB_STATUS7_W_XOVER_LOCK;
 
+	// Byte 8 - More turnout states
+	if (CPTurnoutActualDirectionGet(cpState, TURNOUT_M1_M3))
+		mrbTxBuffer[8] |= MRB_STATUS8_M1M3_NORMAL;
+	else
+		mrbTxBuffer[8] |= MRB_STATUS8_M1M3_REVERSE;
+
+	if (CPTurnoutLockGet(cpState, TURNOUT_M1_M3))
+		mrbTxBuffer[8] |= MRB_STATUS8_M1M3_LOCK;
+
+
 	// Compute virtual occupancy
-	mrbTxBuffer[8] = SignalHeadsToVirtOcc(CPSignalHeadGetAspect(cpState, SIG_MAIN1_E_UPPER), CPSignalHeadGetAspect(cpState, SIG_MAIN1_E_LOWER))
+	mrbTxBuffer[9] = SignalHeadsToVirtOcc(CPSignalHeadGetAspect(cpState, SIG_MAIN1_E_UPPER), CPSignalHeadGetAspect(cpState, SIG_MAIN1_E_LOWER))
 		| (SignalHeadsToVirtOcc(CPSignalHeadGetAspect(cpState, SIG_MAIN1_W_UPPER), CPSignalHeadGetAspect(cpState, SIG_MAIN1_W_LOWER))<<4);
 
 	if (CPRouteTest(cpState, ROUTE_MAIN1_WESTBOUND)
 		|| CPRouteTest(cpState, ROUTE_MAIN2_TO_MAIN1_WESTBOUND))
-		mrbTxBuffer[8] |= MRB_STATUS8_M1W_VIRT_TUMBLE;
+		mrbTxBuffer[9] |= MRB_STATUS9_M1W_VIRT_TUMBLE;
 
 	if (CPRouteTest(cpState, ROUTE_MAIN1_EASTBOUND)
-		|| CPRouteTest(cpState, ROUTE_MAIN2_TO_MAIN1_EASTBOUND))
-		mrbTxBuffer[8] |= MRB_STATUS8_M1E_VIRT_TUMBLE;
+		|| CPRouteTest(cpState, ROUTE_MAIN2_TO_MAIN1_EASTBOUND)
+		|| CPRouteTest(cpState, ROUTE_MAIN3_TO_MAIN1_EASTBOUND))
+		mrbTxBuffer[9] |= MRB_STATUS9_M1E_VIRT_TUMBLE;
 
-	mrbTxBuffer[9] = SignalHeadsToVirtOcc(CPSignalHeadGetAspect(cpState, SIG_MAIN2_E_UPPER), CPSignalHeadGetAspect(cpState, SIG_MAIN2_E_LOWER))
+	mrbTxBuffer[10] = SignalHeadsToVirtOcc(CPSignalHeadGetAspect(cpState, SIG_MAIN2_E_UPPER), CPSignalHeadGetAspect(cpState, SIG_MAIN2_E_LOWER))
 		| (SignalHeadsToVirtOcc(CPSignalHeadGetAspect(cpState, SIG_MAIN2_W_UPPER), CPSignalHeadGetAspect(cpState, SIG_MAIN2_W_LOWER))<<4);
 
 	if (CPRouteTest(cpState, ROUTE_MAIN2_WESTBOUND)
 		|| CPRouteTest(cpState, ROUTE_MAIN2_VIA_MAIN1_WESTBOUND)
 		|| CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN2_WESTBOUND))
-		mrbTxBuffer[9] |= MRB_STATUS9_M2W_VIRT_TUMBLE;
+		mrbTxBuffer[10] |= MRB_STATUS10_M2W_VIRT_TUMBLE;
 
 	if (CPRouteTest(cpState, ROUTE_MAIN2_EASTBOUND)
 		|| CPRouteTest(cpState, ROUTE_MAIN2_VIA_MAIN1_EASTBOUND)
-		|| CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN2_EASTBOUND))
-		mrbTxBuffer[9] |= MRB_STATUS9_M2E_VIRT_TUMBLE;
+		|| CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN2_EASTBOUND)
+		|| CPRouteTest(cpState, ROUTE_MAIN3_TO_MAIN2_EASTBOUND))
+		mrbTxBuffer[10] |= MRB_STATUS10_M2E_VIRT_TUMBLE;
+
+	mrbTxBuffer[11] = SignalHeadsToVirtOcc(CPSignalHeadGetAspect(cpState, SIG_MAIN3_W_UPPER), CPSignalHeadGetAspect(cpState, SIG_MAIN3_W_LOWER))<<4;
+
+	if (CPRouteTest(cpState, ROUTE_MAIN2_TO_MAIN3_WESTBOUND)
+		|| CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN3_WESTBOUND))
+		mrbTxBuffer[11] |= MRB_STATUS11_M3W_VIRT_TUMBLE;
 
 	return mrbTxBuffer[MRBUS_PKT_LEN];
 
@@ -1255,8 +1285,8 @@ void PktHandler(CPState_t *cpState)
 			txBuffer[9]  = 0; // Software Revision
 			txBuffer[10]  = 0; // Hardware Major Revision
 			txBuffer[11]  = 0; // Hardware Minor Revision
-			txBuffer[12] = 'C';
-			txBuffer[13] = 'P';
+			txBuffer[12] = 'X';
+			txBuffer[13] = 'O';
 			txBuffer[14] = '3';
 			txBuffer[15] = ' ';
 			mrbusPktQueuePush(&mrbusTxQueue, txBuffer, txBuffer[MRBUS_PKT_LEN]);
