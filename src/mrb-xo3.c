@@ -986,7 +986,7 @@ bool cpCodeRoute(CPState_t* cpState, CPRouteEntrance_t entrance, bool setRoute)
 				cpLockAllTurnouts(cpState);
 				CPRouteSet(cpState, ROUTE_MAIN2_WESTBOUND);
 				return true;
-			} else if (!westCrossover && eastCrossover) {
+			} else if (westCrossover && !eastCrossover) {
 
 				if (m1m3Switch)
 				{
