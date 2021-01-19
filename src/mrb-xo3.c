@@ -690,6 +690,12 @@ uint8_t cpStateToStatusPacket(CPState_t* cpState, uint8_t *mrbTxBuffer, uint8_t 
 		|| CPRouteTest(cpState, ROUTE_MAIN2_VIA_MAIN1_EASTBOUND))
 		mrbTxBuffer[6] |= MRB_STATUS6_M2W_ENTR_CLEARED;
 
+	if (CPRouteTest(cpState, ROUTE_MAIN3_TO_MAIN1_EASTBOUND)
+		|| CPRouteTest(cpState, ROUTE_MAIN3_TO_MAIN2_EASTBOUND))
+		mrbTxBuffer[6] |= MRB_STATUS6_M3W_ENTR_CLEARED;
+
+
+
 	// Byte 7 - More turnout states
 	if (STATE_LOCKED != CPTimelockStateGet(cpState, MAIN_TIMELOCK))
 	{
