@@ -1,5 +1,5 @@
 /*************************************************************************
-Title:    MRBus Simple 3-Way CTC Control Point Node
+Title:    MRBus 3-to-2 CTC Control Point Node
 Authors:  Nathan D. Holmes <maverick@drgw.net>
 File:     $Id: $
 License:  GNU General Public License v3
@@ -775,10 +775,56 @@ bool cpSetTurnout(CPState_t* cpState, CPTurnoutNames_t turnout, bool setNormal)
 	return true;
 }
 
+
+bool cpClearRoute(CPState_t* cpState, CPRouteEntrance_t entrance)
+{
+	switch(entrance)
+	{
+		case ROUTE_ENTR_M1_EASTBOUND:
+			CPRouteClear(cpState, ROUTE_MAIN1_TO_MAIN2_EASTBOUND);
+			CPRouteClear(cpState, ROUTE_MAIN1_EASTBOUND);
+			break;
+
+		case ROUTE_ENTR_M1_WESTBOUND:
+			CPRouteClear(cpState, ROUTE_MAIN1_WESTBOUND);
+			CPRouteClear(cpState, ROUTE_MAIN1_TO_MAIN2_WESTBOUND);
+			CPRouteClear(cpState, ROUTE_MAIN1_TO_MAIN3_WESTBOUND);
+			break;
+
+		case ROUTE_ENTR_M2_EASTBOUND:
+			CPRouteClear(cpState, ROUTE_MAIN2_VIA_MAIN1_EASTBOUND);
+			CPRouteClear(cpState, ROUTE_MAIN2_TO_MAIN1_EASTBOUND);
+			CPRouteClear(cpState, ROUTE_MAIN2_EASTBOUND);
+			break;
+
+		case ROUTE_ENTR_M2_WESTBOUND:
+			CPRouteClear(cpState, ROUTE_MAIN2_VIA_MAIN1_WESTBOUND);
+			CPRouteClear(cpState, ROUTE_MAIN2_TO_MAIN1_WESTBOUND);
+			CPRouteClear(cpState, ROUTE_MAIN2_TO_MAIN3_WESTBOUND);
+			CPRouteClear(cpState, ROUTE_MAIN2_WESTBOUND);
+			break;
+		
+		case ROUTE_ENTR_M3_EASTBOUND:
+			CPRouteClear(cpState, ROUTE_MAIN3_TO_MAIN1_EASTBOUND);
+			CPRouteClear(cpState, ROUTE_MAIN3_TO_MAIN2_EASTBOUND);
+			break;
+
+		default:
+			return false;
+	}
+
+	return true;
+}
+
+
+
 bool cpCodeRoute(CPState_t* cpState, CPRouteEntrance_t entrance, bool setRoute)
 {
 	if (STATE_LOCKED != CPTimelockStateGet(cpState, MAIN_TIMELOCK))
 		return false; // Can't set any route when the timelock is open
+
+	if (false == setRoute)
+		return cpClearRoute(cpState, entrance);
 
 	bool eastCrossover = CPTurnoutRequestedDirectionGet(cpState, TURNOUT_E_XOVER);
 	bool westCrossover = CPTurnoutRequestedDirectionGet(cpState, TURNOUT_W_XOVER);
@@ -1251,7 +1297,7 @@ void PktHandler(CPState_t *cpState)
 				goto PktIgnore;
 			
 			txBuffer[MRBUS_PKT_DEST] = rxBuffer[MRBUS_PKT_SRC];
-			txBuffer[MRBUS_PKT_LEN] = 8;			
+			txBuffer[MRBUS_PKT_LEN] = 8;
 			txBuffer[MRBUS_PKT_TYPE] = 'w';
 			eeprom_write_byte((uint8_t*)(uint16_t)rxBuffer[6], rxBuffer[7]);
 			txBuffer[6] = rxBuffer[6];
