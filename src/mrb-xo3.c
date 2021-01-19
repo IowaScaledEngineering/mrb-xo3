@@ -673,7 +673,8 @@ uint8_t cpStateToStatusPacket(CPState_t* cpState, uint8_t *mrbTxBuffer, uint8_t 
 		mrbTxBuffer[6] |= MRB_STATUS6_MAIN2_OS_OCC;
 
 	if (CPRouteTest(cpState, ROUTE_MAIN1_WESTBOUND)
-		|| CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN2_WESTBOUND))
+		|| CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN2_WESTBOUND)
+		|| CPRouteTest(cpState, ROUTE_MAIN1_TO_MAIN3_WESTBOUND))
 		mrbTxBuffer[6] |= MRB_STATUS6_M1E_ENTR_CLEARED;
 
 	if (CPRouteTest(cpState, ROUTE_MAIN1_EASTBOUND)
@@ -682,7 +683,8 @@ uint8_t cpStateToStatusPacket(CPState_t* cpState, uint8_t *mrbTxBuffer, uint8_t 
 
 	if (CPRouteTest(cpState, ROUTE_MAIN2_WESTBOUND)
 		|| CPRouteTest(cpState, ROUTE_MAIN2_TO_MAIN1_WESTBOUND)
-		|| CPRouteTest(cpState, ROUTE_MAIN2_VIA_MAIN1_WESTBOUND))
+		|| CPRouteTest(cpState, ROUTE_MAIN2_VIA_MAIN1_WESTBOUND)
+		|| CPRouteTest(cpState, ROUTE_MAIN2_TO_MAIN3_WESTBOUND))
 		mrbTxBuffer[6] |= MRB_STATUS6_M2E_ENTR_CLEARED;
 
 	if (CPRouteTest(cpState, ROUTE_MAIN2_EASTBOUND)
